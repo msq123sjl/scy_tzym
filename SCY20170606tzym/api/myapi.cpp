@@ -436,9 +436,12 @@ void myAPI::HourDataProc_WaterFlow(QString startTime,QString endTime)
                     if(query1.last())
                     {
                         total2=query1.value(0).toDouble();
-                        QString doublestr=QString::number(total2,'g',8);
+                        //QString doublestr=QString::number(total2,'g',8);
+                        QString doublestr = query1.value(0).toString();
                         cou_value=total2-total1;
+                        qDebug()<<QString(" hour total2[%1] total1[%2] cou_value[%3]").arg(total2).arg(total1).arg(cou_value);
                         if(cou_value<0) cou_value=0;
+                        qDebug()<<QString(" insert into [LastHour] ([GetTime],[Flow]) values('%1','%2')").arg(endTime).arg(doublestr);
                         query3.exec(QString(" insert into [LastHour] ([GetTime],[Flow]) values('%1','%2')").arg(endTime).arg(doublestr));
                         query3.clear();
                     }
