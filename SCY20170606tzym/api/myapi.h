@@ -74,6 +74,7 @@ private:
     void Protocol_28(int port);
     void Protocol_29(int port,int Address,int Dec,QString Name,QString Code,QString Unit);
     void Protocol_30(int port,int Address,int Dec,QString Name,QString Code,QString Unit);
+    void Protocol_31(int port,int Address,int Dec,QString Name,QString Code,QString Unit);
     double HexToDouble(const unsigned char* buf);
     void delaymsec(int msec);
 

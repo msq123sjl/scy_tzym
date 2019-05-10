@@ -2677,6 +2677,91 @@ void myAPI::Protocol_30(int port,int Address,int Dec,QString Name,QString Code,Q
         }
     }
 }
+//LMAG流量计
+void myAPI::Protocol_31(int port,int Address,int Dec,QString Name,QString Code,QString Unit)
+{
+    double rtd=0;
+    double total=0;
+    QString flag="D";
+    QByteArray readbuf;
+    QByteArray sendbuf;
+    int check=0;
+    volatile char s[4];
+    int32_t total_tmp;
+    sendbuf.resize(8);
+    sendbuf[0]=Address;
+    sendbuf[1]=0x04;
+    sendbuf[2]=0x10;
+    sendbuf[3]=0x10;
+    sendbuf[4]=0x00;
+    sendbuf[5]=0x02;
+    check = myHelper::CRC16_Modbus(sendbuf.data(),6);
+    sendbuf[6]=(char)(check);
+    sendbuf[7]=(char)(check>>8);
+    qDebug()<<QString("COM%1 send:").arg(port+2)<<sendbuf.toHex().toUpper();
+    readbuf=myCom[port]->readAll();
+    readbuf="";
+    myCom[port]->write(sendbuf);
+    myCom[port]->flush();
+    sleep(2);
+    readbuf=myCom[port]->readAll();
+    qDebug()<<QString("COM%1 received:").arg(port+2)<<readbuf.toHex().toUpper();
+    if(readbuf.length()>=9){
+        if(Address==readbuf[0])
+        {
+                check = myHelper::CRC16_Modbus(readbuf.data(),7);
+                if((readbuf[7]==(char)(check&0xff))&&(readbuf[8]==(char)(check>>8)))
+                {
+                    s[0]=readbuf[6];
+                    s[1]=readbuf[5];
+                    s[2]=readbuf[4];
+                    s[3]=readbuf[3];
+                    rtd=*(float *)s;        //瞬时流量
+                    flag="N";
+                }
+        }
+    }
+    sleep(2);
+    sendbuf.resize(8);
+    sendbuf[0]=Address;
+    sendbuf[1]=0x04;
+    sendbuf[2]=0x10;
+    sendbuf[3]=0x18;
+    sendbuf[4]=0x00;
+    sendbuf[5]=0x02;
+    check = myHelper::CRC16_Modbus(sendbuf.data(),6);
+    sendbuf[6]=(char)(check);
+    sendbuf[7]=(char)(check>>8);
+    qDebug()<<QString("COM%1 send:").arg(port+2)<<sendbuf.toHex().toUpper();
+    myCom[port]->write(sendbuf);
+    myCom[port]->flush();
+    sleep(2);
+    readbuf=myCom[port]->readAll();
+    qDebug()<<QString("COM%1 received:").arg(port+2)<<readbuf.toHex().toUpper();
+    if(readbuf.length()>=9){
+        if(Address==readbuf[0])
+        {
+                check = myHelper::CRC16_Modbus(readbuf.data(),readbuf.length()-2);
+                if((readbuf[readbuf.length()-2]==(char)(check&0xff))&&(readbuf[readbuf.length()-1]==(char)(check>>8)))
+                {
+                    total_tmp=readbuf[3];
+                    total_tmp=total_tmp<<8;
+                    total_tmp+=readbuf[4];
+                    total_tmp=total_tmp<<8;
+                    total_tmp+=readbuf[5];
+                    total_tmp=total_tmp<<8;
+                    total_tmp+=readbuf[6];
+                    total=total_tmp;
+                    if(flag!="N") flag='D';
+                    if(flag=="N")
+                    {
+                        CacheDataProc(rtd,total,flag,Dec,Name,Code,Unit);
+                    }
+                }
+        }
+    }
+
+}
 
 double myAPI::HexToDouble(const unsigned char* bytes)
     {
@@ -2830,6 +2915,10 @@ void myAPI::MessageFromCom(int port)
 
         case 29://ABB流量计-表显累计值
             Protocol_30(port,Address,Decimals,Name,Code,Unit);
+            break;
+
+        case 30://LMAG流量计
+            Protocol_31(port,Address,Decimals,Name,Code,Unit);
             break;
 
        default: break;

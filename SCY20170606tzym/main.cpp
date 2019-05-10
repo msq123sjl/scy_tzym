@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 {
     int res=0;
     QApplication a(argc, argv);
-
+    system("echo start[`date`] >> /mnt/nandflash/start.log");
     QFont font("SIMSUN",9,QFont::Normal);           //设置字体
     a.setFont(font);
     qInstallMsgHandler(myMessageOutput);
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
         name = QSqlDatabase::database().connectionName();
     }//超出作用域，隐含对象QSqlDatabase::database()被删除。
     QSqlDatabase::removeDatabase(name);
-    qDebug()<<QString("%1").arg(name);
+    system("echo stop[`date`] >> /mnt/nandflash/start.log");
     return res;
 
 }
